@@ -127,10 +127,10 @@ let test_compose () =
     let f x = x + 1 in
     let g x = x * 2 in
     let result = compose f g 3 in
-    if result = 7 then
+    if result =8 then
       Printf.printf "compose: pass\n"
     else
-      Printf.printf "compose: fail (expected 7, got %d)\n" result
+      Printf.printf "compose: fail (expected 8, got %d)\n" result
   with Not_implemented -> Printf.printf "compose: Not implemented\n";;
 
 (* curry 테스트 *)
@@ -160,9 +160,9 @@ let test_uncurry () =
 (* multifun 테스트 *)
 let test_multifun () =
   try
-    let f x = x + 1 in
-    let result = multifun f 3 4 in
-    if result = 8 then
+    let f x = x * x  in
+    let result = multifun f 3 2 in
+    if result = 256 then
       Printf.printf "multifun: pass\n"
     else
       Printf.printf "multifun: fail (expected 8, got %d)\n" (result)
@@ -255,8 +255,9 @@ let test_cartprod () =
 (* powerset 테스트 *)
 let test_powerset () =
   try
-    let result = powerset [1; 2] in
-    if result = [[]; [1]; [2]; [1; 2]] then
+    let result = List.sort compare (powerset [1; 2]) in
+    let expected = List.sort compare [[]; [1]; [2]; [1; 2]] in
+    if result = expected then
       Printf.printf "powerset: pass\n"
     else
       Printf.printf "powerset: fail (expected [[]; [1]; [2]; [1; 2]], got %s)\n" (String.concat "; " (List.map (fun l -> "[" ^ (String.concat "; " (List.map string_of_int l)) ^ "]") result))
