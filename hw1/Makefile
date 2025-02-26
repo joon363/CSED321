@@ -10,13 +10,14 @@ CAMLLEX=ocamllex
 TARGET = hw1
 OBJ = hw1.cmo
 TEST_OBJ = hw1.cmo test.cmo
+TEST_TARGET = hw1_test
 
 all: $(OBJ)
 	$(CAMLC) $(CAMLCFLAG) -o $(TARGET) $(OBJ) 
 
 test: $(TEST_OBJ)
-	$(CAMLC) $(CAMLCFLAG) -o $(TARGET) $(TEST_OBJ) 
-	./$(TARGET)
+	$(CAMLC) $(CAMLCFLAG) -o $(TEST_TARGET) $(TEST_OBJ) 
+	./$(TEST_TARGET)
 
 clean:
 	rm -f $(TARGET) *.annot *.aux *.log *.cm[iox] *.dvi 
@@ -36,4 +37,3 @@ depend:
 .PHONY: depend
 
 include .depend
-
