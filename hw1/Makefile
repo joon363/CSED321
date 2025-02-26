@@ -9,9 +9,14 @@ CAMLLEX=ocamllex
 
 TARGET = hw1
 OBJ = hw1.cmo
+TEST_OBJ = hw1.cmo test.cmo
 
 all: $(OBJ)
 	$(CAMLC) $(CAMLCFLAG) -o $(TARGET) $(OBJ) 
+
+test: $(TEST_OBJ)
+	$(CAMLC) $(CAMLCFLAG) -o $(TARGET) $(TEST_OBJ) 
+	./$(TARGET)
 
 clean:
 	rm -f $(TARGET) *.annot *.aux *.log *.cm[iox] *.dvi 
