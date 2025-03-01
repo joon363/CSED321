@@ -4,9 +4,20 @@ type 'a tree = Leaf of 'a | Node of 'a tree * 'a * 'a tree
 						      
 (** Recursive functions **)
 
-let rec lrevrev _ = raise NotImplemented 
+let rec lrevrev lst = 
+  let rec aux acc l = match l with
+    | [] -> acc
+    | h :: t -> aux ((aux2 [] h) :: acc) t
 
-let rec lfoldl _ _ _ = raise NotImplemented					
+  and aux2 acc2 l = match l with
+    | [] -> acc2
+    | h :: t -> aux2 (h :: acc2) t
+  in aux [] lst 
+
+let rec lfoldl f e lst = match lst with
+  | [] -> e
+  | h::t -> lfoldl f (f(h,e)) t
+
 			 
 (** Tail recursive functions  **)
 
