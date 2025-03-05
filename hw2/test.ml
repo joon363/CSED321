@@ -33,10 +33,10 @@ let test_fact () =
 let test_fib () =
   try
     let result = fib 6 in
-    if result = 8 then
+    if result = 13 then
       Printf.printf "fib: pass\n"
     else
-      Printf.printf "fib: fail (expected 8, got %d)\n" result
+      Printf.printf "fib: fail (expected 13, got %d)\n" result
   with NotImplemented -> Printf.printf "fib: Not implemented\n";;
 
 (* alterSum 테스트 *)
@@ -109,15 +109,110 @@ let test_preorder () =
       Printf.printf "preorder: fail (expected [7; 3; 1; 2; 4], got %s)\n" (String.concat "," (List.map string_of_int result))
   with NotImplemented -> Printf.printf "preorder: Not implemented\n";;
 
-  let () = 
-    test_lrevrev();
-    test_lfoldl();
-    test_fact();
-    test_fib();
-    test_alterSum();
-    test_ltabulate();
-    test_lfilter();
-    test_union();
-    test_inorder();
-    test_postorder();
-    test_preorder();
+  (* quicksort 테스트 *)
+let test_quicksort () =
+  try
+    let result = quicksort [3; 7; 5; 1; 2] in
+    if result = [1; 2; 3; 5; 7] then
+      Printf.printf "quicksort: pass\n"
+    else
+      Printf.printf "quicksort: fail (expected [1; 2; 3; 5; 7], got %s)\n" (String.concat "," (List.map string_of_int result))
+  with NotImplemented -> Printf.printf "quicksort: Not implemented\n";;
+
+(* mergesort 테스트 *)
+let test_mergesort () =
+  try
+    let result = mergesort [3; 7; 5; 1; 2] in
+    if result = [1; 2; 3; 5; 7] then
+      Printf.printf "mergesort: pass\n"
+    else
+      Printf.printf "mergesort: fail (expected [1; 2; 3; 5; 7], got %s)\n" (String.concat "," (List.map string_of_int result))
+  with NotImplemented -> Printf.printf "mergesort: Not implemented\n";;
+
+(* Heap 테스트 *)
+let test_heap () =
+  try
+    let open Heap in
+    let h1 = empty () in
+    let (h2, loc1) = allocate h1 10 in
+    let (h3, loc2) = allocate h2 20 in
+    let v1 = dereference h3 loc1 in
+    let v2 = dereference h3 loc2 in
+    if v1 = 10 && v2 = 20 then
+      Printf.printf "Heap test: pass\n"
+    else
+      Printf.printf "Heap test: fail (expected 10 and 20, got %d and %d)\n" v1 v2
+  with NotImplemented -> Printf.printf "Heap: Not implemented\n";;
+
+(* DictList 테스트 *)
+let test_dict_list () =
+  try
+    let open DictList in
+    (* 빈 딕셔너리 생성 *)
+    let d1 = empty () in
+    
+    (* key-value 삽입 *)
+    let d2 = insert d1 ("a", 10) in
+    let d3 = insert d2 ("b", 20) in
+    
+    (* key 조회 *)
+    let v1 = lookup d3 "a" in
+    let v2 = lookup d3 "b" in
+    let v3 = lookup d3 "c" in
+
+    (* 값 확인 *)
+    match v1, v2, v3 with
+    | Some 10, Some 20, None ->
+        Printf.printf "DictList test: pass\n"
+    | _ ->
+        Printf.printf "DictList test: fail (expected Some 10, Some 20, None, got %s, %s, %s)\n"
+          (match v1 with Some x -> string_of_int x | None -> "None")
+          (match v2 with Some x -> string_of_int x | None -> "None")
+          (match v3 with Some x -> string_of_int x | None -> "None")
+  with NotImplemented -> Printf.printf "DictList test: Not implemented\n";;
+
+
+  (* DictFun 테스트 *)
+let test_dict_fun () =
+  try
+    let open DictFun in
+    (* 빈 딕셔너리 생성 *)
+    let d1 = empty () in
+    
+    (* key-value 삽입 *)
+    let d2 = insert d1 ("a", 10) in
+    let d3 = insert d2 ("b", 20) in
+    
+    (* key 조회 *)
+    let v1 = lookup d3 "a" in
+    let v2 = lookup d3 "b" in
+    let v3 = lookup d3 "c" in
+
+    (* 값 확인 *)
+    match v1, v2, v3 with
+    | Some 10, Some 20, None ->
+        Printf.printf "DictFun test: pass\n"
+    | _ ->
+        Printf.printf "DictFun test: fail (expected Some 10, Some 20, None, got %s, %s, %s)\n"
+          (match v1 with Some x -> string_of_int x | None -> "None")
+          (match v2 with Some x -> string_of_int x | None -> "None")
+          (match v3 with Some x -> string_of_int x | None -> "None")
+  with NotImplemented -> Printf.printf "DictFun test: Not implemented\n";;
+
+let () = 
+  test_lrevrev();
+  test_lfoldl();
+  test_fact();
+  test_fib();
+  test_alterSum();
+  test_ltabulate();
+  test_lfilter();
+  test_union();
+  test_inorder();
+  test_postorder();
+  test_preorder();
+  test_quicksort();
+  test_mergesort();
+  test_heap();
+  test_dict_list();
+  test_dict_fun();
