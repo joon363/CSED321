@@ -9,7 +9,16 @@ CAMLLEX=ocamllex
 
 TARGET = hw3
 OBJ = common.cmo hw3.cmo
+TEST_OBJ = common.cmo hw3.cmo test.cmo
+TEST_TARGET = hw3_test
 
+all: $(OBJ)
+	$(CAMLC) $(CAMLCFLAG) -o $(TARGET) $(OBJ) 
+
+test: $(TEST_OBJ)
+	$(CAMLC) $(CAMLCFLAG) -o $(TEST_TARGET) $(TEST_OBJ) 
+	./$(TEST_TARGET)
+	
 all: $(OBJ)
 	$(CAMLC) $(CAMLCFLAG) -o $(TARGET) $(OBJ) 
 
