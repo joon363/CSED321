@@ -131,7 +131,15 @@ sig
 end
 =
 struct
-  let closure _ = raise NotImplemented
+  let closure mat = 
+    let n = Mat.dim mat in
+    let idendityMat = Mat.identity n in
+    let newMat m1 m2 = Mat.(idendityMat ++ (m1**m2)) in
+    let rec find_closure acc_mat = 
+      if Mat.(acc_mat == (newMat acc_mat mat))
+      then acc_mat
+      else find_closure (newMat acc_mat mat)
+    in find_closure mat
 end
 
 (* Problem 2-2 *)
@@ -140,7 +148,11 @@ end
 module BoolMat = MatrixFn (Boolean)
 module BoolMatClosure = ClosureFn (BoolMat)
 
-let reach _ = raise NotImplemented
+let reach lst =
+  try
+    let mat = BoolMat.create lst in
+    BoolMat.to_list (BoolMatClosure.closure mat)
+  with BoolMat.MatrixIllegal -> raise BoolMat.MatrixIllegal
 
 let al = 
   [[true;  false; false; false; false; false];
@@ -165,17 +177,40 @@ struct
 
   exception ScalarIllegal
 
-  let zero = 999999              (* Dummy value : Rewrite it! *)
-  let one = 999999               (* Dummy value : Rewrite it! *)
+  (*Target: sum (distance(x,z) ** distance(z,y)) means shortest path
+    then, ++ opration should return smaller element,
+    ** operation should add two distances. 
 
-  let (++) _ _ = raise NotImplemented
-  let ( ** ) _ _ = raise NotImplemented
-  let (==) _ _ = raise NotImplemented
+    if so, identity zero for ++ should be -1 
+      because -1 here means Infinite distance.
+    and identity one for ** should be 0
+      because ** here is addition. 
+      
+  *)
+  let zero = -1             
+  let one = 0              
+
+  let (++) d1 d2 = 
+    match d1, d2 with
+    | -1, -1 -> -1
+    | -1, d | d, -1 -> d
+    | _ -> min d1 d2
+  let ( ** ) d1 d2 = 
+    if d1 = -1 || d2 = -1 then -1
+    else d1+d2
+  let (==) d1 d2 = (d1=d2)
 end
 
 (* .. Write some code here .. *)
 
-let distance _ = raise NotImplemented
+module DistMat = MatrixFn (Distance)
+module DistMatClosure = ClosureFn (DistMat)
+
+let distance lst =
+  try
+    let mat = DistMat.create lst in
+    DistMat.to_list (DistMatClosure.closure mat)
+  with DistMat.MatrixIllegal -> raise DistMat.MatrixIllegal
 
 let dl =
   [[  0;  -1;  -1;  -1;  -1;  -1 ];
@@ -200,17 +235,36 @@ struct
 
   exception ScalarIllegal
 
-  let zero = 999999              (* Dummy value : Rewrite it! *)
-  let one = 999999               (* Dummy value : Rewrite it! *)
+  (*Target: sum (weight(x,z) ** weight(z,y)) means min weight if there exists a path
+    then, ++ opration should return bigger element,
+    ** operation should also return smaller element. 
+
+    so, identity zero for ++ is 0,
+        identity one for ** should be -1 (means no path)
+      
+  *)
+  let zero = 0
+  let one = -1
  
-  let (++) _ _ = raise NotImplemented
-  let ( ** ) _ _ = raise NotImplemented
-  let (==) _ _ = raise NotImplemented
+  let (++) d1 d2 = 
+    if d1 = -1 || d2 = -1 then -1
+    else max d1 d2
+  let ( ** ) d1 d2 = 
+    match d1, d2 with
+    | -1, -1 -> -1
+    | -1, d | d, -1 -> d
+    | _ -> min d1 d2
+  let (==) d1 d2 = (d1=d2)
 end
 
-(* .. Write some code here .. *)
+module WeightMat = MatrixFn (Weight)
+module WeightMatClosure = ClosureFn (WeightMat)
 
-let weight _ = raise NotImplemented
+let weight lst =
+  try
+    let mat = WeightMat.create lst in
+    WeightMat.to_list (WeightMatClosure.closure mat)
+  with WeightMat.MatrixIllegal -> raise WeightMat.MatrixIllegal
 
 let ml =
   [[-1; 0  ; 0  ; 0  ; 0  ; 0   ];
@@ -242,7 +296,7 @@ let _ =
 
 
 let print_test text condition = 
-  Printf.printf "%s: %s\n" text (if condition then "pass" else "fail")
+  if condition then Printf.printf "" else Printf.printf "%s: %s\n" text ("fail")
 
 
 let test_integer () =
