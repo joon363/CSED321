@@ -176,7 +176,7 @@ struct
   type t = int
 
   exception ScalarIllegal
-
+  
   (*Target: sum (distance(x,z) ** distance(z,y)) means shortest path
     then, ++ opration should return smaller element,
     ** operation should add two distances. 
@@ -374,71 +374,71 @@ let _ = Printf.printf "=============Test Vector=============\n"; test_vector()
 
 
 
-
-module Matrix = MatrixFn(Integer)
+module IntMat = MatrixFn (Integer)
+module IntMatClosure = ClosureFn (IntMat)
 
 let test_matrix () =
   try
-    (* 1. Matrix creation and identity matrix *)
-    let m1 = Matrix.create [[1; 0]; [0; 1]] in
-    let m2 = Matrix.create [[0; 1]; [1; 0]] in
-    let identity_matrix = Matrix.identity 2 in
+    (* 1. IntMat creation and identity IntMat *)
+    let m1 = IntMat.create [[1; 0]; [0; 1]] in
+    let m2 = IntMat.create [[0; 1]; [1; 0]] in
+    let identity_matrix = IntMat.identity 2 in
 
-    (* Test identity matrix *)
-    print_test "Identity matrix (2x2)" (Matrix.(==) identity_matrix (Matrix.identity 2));
+    (* Test identity IntMat *)
+    print_test "Identity IntMat (2x2)" (IntMat.(==) identity_matrix (IntMat.identity 2));
 
-    (* 2. Matrix addition (++) *)
-    let sum = Matrix.(++) m1 m2 in
-    let expected_sum = Matrix.create [[1; 1]; [1; 1]] in
-    print_test "Matrix addition (m1 ++ m2)" (Matrix.(==) sum expected_sum);
+    (* 2. IntMat addition (++) *)
+    let sum = IntMat.(++) m1 m2 in
+    let expected_sum = IntMat.create [[1; 1]; [1; 1]] in
+    print_test "IntMat addition (m1 ++ m2)" (IntMat.(==) sum expected_sum);
 
-    (* 3. Matrix multiplication (**) *)
-    let m3 = Matrix.create [[1; 0]; [0; 1]] in
-    let m4 = Matrix.create [[1; 0]; [0; 1]] in
-    let mul_result = Matrix.( ** ) m3 m4 in
-    let expected_mul = Matrix.create [[1; 0]; [0; 1]] in
-    print_test "Matrix multiplication (m3 ** m4)" (Matrix.(==) mul_result expected_mul);
+    (* 3. IntMat multiplication (**) *)
+    let m3 = IntMat.create [[1; 0]; [0; 1]] in
+    let m4 = IntMat.create [[1; 0]; [0; 1]] in
+    let mul_result = IntMat.( ** ) m3 m4 in
+    let expected_mul = IntMat.create [[1; 0]; [0; 1]] in
+    print_test "IntMat multiplication (m3 ** m4)" (IntMat.(==) mul_result expected_mul);
 
-    (* 4. Matrix transpose *)
-    let m5 = Matrix.create [[1; 0]; [0; 1]] in
-    let transposed = Matrix.transpose m5 in
-    print_test "Matrix transpose (m5)" (Matrix.(==) transposed m5);
+    (* 4. IntMat transpose *)
+    let m5 = IntMat.create [[1; 0]; [0; 1]] in
+    let transposed = IntMat.transpose m5 in
+    print_test "IntMat transpose (m5)" (IntMat.(==) transposed m5);
 
-    (* 5. Matrix equality (==) *)
-    let equal = Matrix.(==) m1 m2 in
-    print_test "Matrix equality (m1 == m2)" (equal = false);
+    (* 5. IntMat equality (==) *)
+    let equal = IntMat.(==) m1 m2 in
+    print_test "IntMat equality (m1 == m2)" (equal = false);
 
   with
-  | Matrix.MatrixIllegal -> Printf.printf "Test failed with MatrixIllegal exception\n"
+  | IntMat.MatrixIllegal -> Printf.printf "Test failed with MatrixIllegal exception\n"
   | _ -> Printf.printf "Test failed with unexpected exception\n"
 
 
 let test_matrix_exception1() = 
   try
-    let invalid_m = Matrix.create [[1; 0]; [0]] in
-    print_test "Invalid matrix creation" false
+    let invalid_m = IntMat.create [[1; 0]; [0]] in
+    print_test "Invalid IntMat creation" false
   with
-  | Matrix.MatrixIllegal -> print_test "Invalid matrix creation" true
+  | IntMat.MatrixIllegal -> print_test "Invalid IntMat creation" true
   | _ -> Printf.printf "Test failed with unexpected exception\n"
   
 let test_matrix_exception2() =
   try
-    let invalid_m1 = Matrix.create [[1]; [0]] in
-    let invalid_m2 = Matrix.create [[0; 1]; [1; 0]] in
-    let invalid_res = Matrix.(++) invalid_m1 invalid_m2 in
-    print_test "Invalid matrix addition" false
+    let invalid_m1 = IntMat.create [[1]; [0]] in
+    let invalid_m2 = IntMat.create [[0; 1]; [1; 0]] in
+    let invalid_res = IntMat.(++) invalid_m1 invalid_m2 in
+    print_test "Invalid IntMat addition" false
   with
-  | Matrix.MatrixIllegal -> print_test "Invalid matrix addition" true
+  | IntMat.MatrixIllegal -> print_test "Invalid IntMat addition" true
   | _ -> Printf.printf "Test failed with unexpected exception\n"
   
 let test_matrix_exception3() =
   try
-    let invalid_m1 = Matrix.create [[1]; [0]] in
-    let invalid_m2 = Matrix.create [[0; 1]; [1; 0]] in
-    let invalid_res = Matrix.( ** ) invalid_m1 invalid_m2 in
-    print_test "Invalid matrix multiplication" false
+    let invalid_m1 = IntMat.create [[1]; [0]] in
+    let invalid_m2 = IntMat.create [[0; 1]; [1; 0]] in
+    let invalid_res = IntMat.( ** ) invalid_m1 invalid_m2 in
+    print_test "Invalid IntMat multiplication" false
   with
-  | Matrix.MatrixIllegal -> print_test "Invalid matrix multiplication" true
+  | IntMat.MatrixIllegal -> print_test "Invalid IntMat multiplication" true
   | _ -> Printf.printf "Test failed with unexpected exception\n"
   
 
@@ -448,4 +448,17 @@ let matrix_test_all() =
   test_matrix_exception2();
   test_matrix_exception3()
 
-let _ = Printf.printf "=============Test Integer Matrix=============\n"; matrix_test_all()
+let _ = Printf.printf "=============Test Integer IntMat=============\n"; matrix_test_all()
+
+
+let test_closure() =
+  try
+    let m1 = IntMatClosure.closure(IntMat.create [[0; 1]; [0; 0]]) in
+    let expected_closure = IntMat.create [[1; 1]; [0; 1]] in
+    print_test "IntMat closure" (IntMat.(==) m1 expected_closure);
+
+  with
+  | IntMat.MatrixIllegal -> print_test "Invalid IntMat multiplication" true
+  | _ -> Printf.printf "Test failed with unexpected exception\n"
+
+let _ = Printf.printf "=============Test IntMat Closure=============\n"; test_closure()
