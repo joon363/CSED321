@@ -210,7 +210,7 @@ let distance lst =
   try
     let mat = DistMat.create lst in
     DistMat.to_list (DistMatClosure.closure mat)
-  with DistMat.MatrixIllegal -> raise DistMat.MatrixIllegal
+  with DistMat.MatrixIllegal -> raise IllegalFormat
 
 let dl =
   [[  0;  -1;  -1;  -1;  -1;  -1 ];
@@ -264,7 +264,7 @@ let weight lst =
   try
     let mat = WeightMat.create lst in
     WeightMat.to_list (WeightMatClosure.closure mat)
-  with WeightMat.MatrixIllegal -> raise WeightMat.MatrixIllegal
+  with WeightMat.MatrixIllegal -> raise IllegalFormat
 
 let ml =
   [[-1; 0  ; 0  ; 0  ; 0  ; 0   ];
