@@ -312,7 +312,10 @@ let test_integer () =
   | Integer.ScalarIllegal -> Printf.printf "Test failed with ScalarIllegal exception\n"
   | _ -> Printf.printf "Test failed with unexpected exception\n"
 
-let _ = Printf.printf "=============Test Integer=============\n"; test_integer()
+let _ = 
+  Printf.printf "============= Starting Integer Test =============\n"; 
+  test_integer();
+  Printf.printf "============= Finished Integer Test =============\n"
 
 let test_boolean () =
   try
@@ -335,8 +338,10 @@ let test_boolean () =
   | _ -> Printf.printf "Test failed with unexpected exception\n"
 
 
-  let _ = Printf.printf "=============Test Boolean=============\n"; test_boolean()
-
+let _ = 
+  Printf.printf "============= Starting Boolean Test =============\n"; 
+  test_boolean();
+  Printf.printf "============= Finished Boolean Test =============\n"
   
   
   (* Create the VectorFn module for Boolean *)
@@ -370,8 +375,10 @@ let test_boolean () =
     | _ -> Printf.printf "Test failed with unexpected exception\n"
 
     
-let _ = Printf.printf "=============Test Vector=============\n"; test_vector()
-
+let _ = 
+  Printf.printf "============= Starting Vector Test ==============\n"; 
+  test_vector();
+  Printf.printf "============= Finished Vector Test ==============\n"
 
 
 module IntMat = MatrixFn (Integer)
@@ -448,7 +455,6 @@ let matrix_test_all() =
   test_matrix_exception2();
   test_matrix_exception3()
 
-let _ = Printf.printf "=============Test Integer IntMat=============\n"; matrix_test_all()
 
 
 let test_closure() =
@@ -460,5 +466,9 @@ let test_closure() =
   with
   | IntMat.MatrixIllegal -> print_test "Invalid IntMat multiplication" true
   | _ -> Printf.printf "Test failed with unexpected exception\n"
-
-let _ = Printf.printf "=============Test IntMat Closure=============\n"; test_closure()
+  
+let _ = 
+  Printf.printf "============= Starting Matrix Test ==============\n"; 
+  matrix_test_all();
+  test_closure();
+  Printf.printf "============= Finished Matrix Test ==============\n"
