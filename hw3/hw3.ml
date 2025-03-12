@@ -19,6 +19,8 @@ struct
   let (==) x y = x = y 
 end
 
+
+  
 (* Problem 1-1 *)
 (* Scalars *)
 
@@ -129,7 +131,15 @@ sig
 end
 =
 struct
-  let closure _ = raise NotImplemented
+  let closure mat = 
+    let n = Mat.dim mat in
+    let idendityMat = Mat.identity n in
+    let newMat m1 m2 = Mat.(idendityMat ++ (m1**m2)) in
+    let rec find_closure acc_mat = 
+      if Mat.(acc_mat == (newMat acc_mat mat))
+      then acc_mat
+      else find_closure (newMat acc_mat mat)
+    in find_closure mat
 end
 
 (* Problem 2-2 *)
@@ -138,7 +148,11 @@ end
 module BoolMat = MatrixFn (Boolean)
 module BoolMatClosure = ClosureFn (BoolMat)
 
-let reach _ = raise NotImplemented
+let reach lst =
+  try
+    let mat = BoolMat.create lst in
+    BoolMat.to_list (BoolMatClosure.closure mat)
+  with BoolMat.MatrixIllegal -> raise BoolMat.MatrixIllegal
 
 let al = 
   [[true;  false; false; false; false; false];
@@ -162,18 +176,41 @@ struct
   type t = int
 
   exception ScalarIllegal
+  
+  (*Target: sum (distance(x,z) ** distance(z,y)) means shortest path
+    then, ++ opration should return smaller element,
+    ** operation should add two distances. 
 
-  let zero = 999999              (* Dummy value : Rewrite it! *)
-  let one = 999999               (* Dummy value : Rewrite it! *)
+    if so, identity zero for ++ should be -1 
+      because -1 here means Infinite distance.
+    and identity one for ** should be 0
+      because ** here is addition. 
+      
+  *)
+  let zero = -1             
+  let one = 0              
 
-  let (++) _ _ = raise NotImplemented
-  let ( ** ) _ _ = raise NotImplemented
-  let (==) _ _ = raise NotImplemented
+  let (++) d1 d2 = 
+    match d1, d2 with
+    | -1, -1 -> -1
+    | -1, d | d, -1 -> d
+    | _ -> min d1 d2
+  let ( ** ) d1 d2 = 
+    if d1 = -1 || d2 = -1 then -1
+    else d1+d2
+  let (==) d1 d2 = (d1=d2)
 end
 
 (* .. Write some code here .. *)
 
-let distance _ = raise NotImplemented
+module DistMat = MatrixFn (Distance)
+module DistMatClosure = ClosureFn (DistMat)
+
+let distance lst =
+  try
+    let mat = DistMat.create lst in
+    DistMat.to_list (DistMatClosure.closure mat)
+  with DistMat.MatrixIllegal -> raise DistMat.MatrixIllegal
 
 let dl =
   [[  0;  -1;  -1;  -1;  -1;  -1 ];
@@ -198,17 +235,36 @@ struct
 
   exception ScalarIllegal
 
-  let zero = 999999              (* Dummy value : Rewrite it! *)
-  let one = 999999               (* Dummy value : Rewrite it! *)
+  (*Target: sum (weight(x,z) ** weight(z,y)) means min weight if there exists a path
+    then, ++ opration should return bigger element,
+    ** operation should also return smaller element. 
+
+    so, identity zero for ++ is 0,
+        identity one for ** should be -1 (means no path)
+      
+  *)
+  let zero = 0
+  let one = -1
  
-  let (++) _ _ = raise NotImplemented
-  let ( ** ) _ _ = raise NotImplemented
-  let (==) _ _ = raise NotImplemented
+  let (++) d1 d2 = 
+    if d1 = -1 || d2 = -1 then -1
+    else max d1 d2
+  let ( ** ) d1 d2 = 
+    match d1, d2 with
+    | -1, -1 -> -1
+    | -1, d | d, -1 -> d
+    | _ -> min d1 d2
+  let (==) d1 d2 = (d1=d2)
 end
 
-(* .. Write some code here .. *)
+module WeightMat = MatrixFn (Weight)
+module WeightMatClosure = ClosureFn (WeightMat)
 
-let weight _ = raise NotImplemented
+let weight lst =
+  try
+    let mat = WeightMat.create lst in
+    WeightMat.to_list (WeightMatClosure.closure mat)
+  with WeightMat.MatrixIllegal -> raise WeightMat.MatrixIllegal
 
 let ml =
   [[-1; 0  ; 0  ; 0  ; 0  ; 0   ];
@@ -234,3 +290,185 @@ let _ =
     print_endline "\nYour program might have bugs!"
   with _ -> print_endline "\nYour program is not complete yet!" 
       
+
+
+
+
+
+let print_test text condition = 
+  if condition then Printf.printf "" else Printf.printf "%s: %s\n" text ("fail")
+
+
+let test_integer () =
+  try
+    print_test "Zero" (Integer.zero = 0);
+    print_test "One" (Integer.one = 1);
+    print_test "Addition (10 ++ 6)" ((Integer.(++) 10 16) = 26);
+    print_test "Multiplication (10 ++ 6)" ((Integer.( ** ) 10 16) = 160);
+    print_test "Equality (3 == 4)" ((Integer.(==) 3 4) = false);
+    print_test "Equality (1 == 1)" ((Integer.(==) 1 1) = true);
+
+  with
+  | Integer.ScalarIllegal -> Printf.printf "Test failed with ScalarIllegal exception\n"
+  | _ -> Printf.printf "Test failed with unexpected exception\n"
+
+let _ = 
+  Printf.printf "============= Starting Integer Test =============\n"; 
+  test_integer();
+  Printf.printf "============= Finished Integer Test =============\n"
+
+let test_boolean () =
+  try
+    (* Test for OR (++) *)
+    print_test "Addition (true ++ false)" (Boolean.(++) true false = true);
+    print_test "Addition (false ++ false)" (Boolean.(++) false false = false);
+    print_test "Addition (true ++ true)" (Boolean.(++) true true = true);
+
+    (* Test for AND (**) *)
+    print_test "Multiplication (true ** false)" (Boolean.( ** ) true false = false);
+    print_test "Multiplication (false ** false)" (Boolean.( ** ) false false = false);
+    print_test "Multiplication (true ** true)" (Boolean.( ** ) true true = true);
+
+    (* Test for equality (==) *)
+    print_test "Equality (true == true)" (Boolean.( == ) true true = true);
+    print_test "Equality (false == true)" (Boolean.( == ) false true = false);
+    print_test "Equality (false == false)" (Boolean.( == ) false false = true);
+  with
+  | Boolean.ScalarIllegal -> Printf.printf "Test failed with ScalarIllegal exception\n"
+  | _ -> Printf.printf "Test failed with unexpected exception\n"
+
+
+let _ = 
+  Printf.printf "============= Starting Boolean Test =============\n"; 
+  test_boolean();
+  Printf.printf "============= Finished Boolean Test =============\n"
+  
+  
+  (* Create the VectorFn module for Boolean *)
+  module BooleanVector = VectorFn(Boolean)
+  
+  let test_vector () =
+    try
+      (* Define some vectors using the created module *)
+      let v1 = BooleanVector.create [true; false; true] in
+      let v2 = BooleanVector.create [false; true; true] in
+      let v3 = BooleanVector.create [true; true; true] in
+      let addv = BooleanVector.create [true; true; true] in
+  
+      (* Test for vector addition (++) *)
+      let sum_v1_v2 = BooleanVector.(++) v1 v2 in
+      print_test "Addition (v1 ++ v2)" (BooleanVector.(==) sum_v1_v2 addv);
+  
+      (* Test for vector equality (==) *)
+      print_test "Equality (v1 == v2)" (BooleanVector.(==) v1 v2 = false);
+      print_test "Equality (v2 == v2)" (BooleanVector.(==) v2 v2 = true);
+  
+      (* Test for inner product (innerp) *)
+      let inner_v1_v2 = BooleanVector.innerp v1 v2 in
+      print_test "Inner product (v1 . v2)" (inner_v1_v2 = true);
+  
+      let inner_v1_v3 = BooleanVector.innerp v1 v3 in
+      print_test "Inner product (v1 . v3)" (inner_v1_v3 = true);
+  
+    with
+    | BooleanVector.VectorIllegal -> Printf.printf "Test failed with VectorIllegal exception\n"
+    | _ -> Printf.printf "Test failed with unexpected exception\n"
+
+    
+let _ = 
+  Printf.printf "============= Starting Vector Test ==============\n"; 
+  test_vector();
+  Printf.printf "============= Finished Vector Test ==============\n"
+
+
+module IntMat = MatrixFn (Integer)
+module IntMatClosure = ClosureFn (IntMat)
+
+let test_matrix () =
+  try
+    (* 1. IntMat creation and identity IntMat *)
+    let m1 = IntMat.create [[1; 0]; [0; 1]] in
+    let m2 = IntMat.create [[0; 1]; [1; 0]] in
+    let identity_matrix = IntMat.identity 2 in
+
+    (* Test identity IntMat *)
+    print_test "Identity IntMat (2x2)" (IntMat.(==) identity_matrix (IntMat.identity 2));
+
+    (* 2. IntMat addition (++) *)
+    let sum = IntMat.(++) m1 m2 in
+    let expected_sum = IntMat.create [[1; 1]; [1; 1]] in
+    print_test "IntMat addition (m1 ++ m2)" (IntMat.(==) sum expected_sum);
+
+    (* 3. IntMat multiplication (**) *)
+    let m3 = IntMat.create [[1; 0]; [0; 1]] in
+    let m4 = IntMat.create [[1; 0]; [0; 1]] in
+    let mul_result = IntMat.( ** ) m3 m4 in
+    let expected_mul = IntMat.create [[1; 0]; [0; 1]] in
+    print_test "IntMat multiplication (m3 ** m4)" (IntMat.(==) mul_result expected_mul);
+
+    (* 4. IntMat transpose *)
+    let m5 = IntMat.create [[1; 0]; [0; 1]] in
+    let transposed = IntMat.transpose m5 in
+    print_test "IntMat transpose (m5)" (IntMat.(==) transposed m5);
+
+    (* 5. IntMat equality (==) *)
+    let equal = IntMat.(==) m1 m2 in
+    print_test "IntMat equality (m1 == m2)" (equal = false);
+
+  with
+  | IntMat.MatrixIllegal -> Printf.printf "Test failed with MatrixIllegal exception\n"
+  | _ -> Printf.printf "Test failed with unexpected exception\n"
+
+
+let test_matrix_exception1() = 
+  try
+    let invalid_m = IntMat.create [[1; 0]; [0]] in
+    print_test "Invalid IntMat creation" false
+  with
+  | IntMat.MatrixIllegal -> print_test "Invalid IntMat creation" true
+  | _ -> Printf.printf "Test failed with unexpected exception\n"
+  
+let test_matrix_exception2() =
+  try
+    let invalid_m1 = IntMat.create [[1]; [0]] in
+    let invalid_m2 = IntMat.create [[0; 1]; [1; 0]] in
+    let invalid_res = IntMat.(++) invalid_m1 invalid_m2 in
+    print_test "Invalid IntMat addition" false
+  with
+  | IntMat.MatrixIllegal -> print_test "Invalid IntMat addition" true
+  | _ -> Printf.printf "Test failed with unexpected exception\n"
+  
+let test_matrix_exception3() =
+  try
+    let invalid_m1 = IntMat.create [[1]; [0]] in
+    let invalid_m2 = IntMat.create [[0; 1]; [1; 0]] in
+    let invalid_res = IntMat.( ** ) invalid_m1 invalid_m2 in
+    print_test "Invalid IntMat multiplication" false
+  with
+  | IntMat.MatrixIllegal -> print_test "Invalid IntMat multiplication" true
+  | _ -> Printf.printf "Test failed with unexpected exception\n"
+  
+
+let matrix_test_all() = 
+  test_matrix(); 
+  test_matrix_exception1();
+  test_matrix_exception2();
+  test_matrix_exception3()
+
+
+
+let test_closure() =
+  try
+    let m1 = IntMatClosure.closure(IntMat.create [[0; 1]; [0; 0]]) in
+    let expected_closure = IntMat.create [[1; 1]; [0; 1]] in
+    print_test "IntMat closure" (IntMat.(==) m1 expected_closure);
+
+  with
+  | IntMat.MatrixIllegal -> print_test "Invalid IntMat multiplication" true
+  | _ -> Printf.printf "Test failed with unexpected exception\n"
+  
+let _ = 
+  Printf.printf "============= Starting Matrix Test ==============\n"; 
+  matrix_test_all();
+  test_closure();
+  Printf.printf "============= Finished Matrix Test ==============\n"
