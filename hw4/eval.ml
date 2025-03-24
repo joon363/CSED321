@@ -19,8 +19,8 @@ let getFreshVariable s =
 (*
  * implement a single step with reduction using the call-by-value strategy.
  *)
-let rec stepv e = raise NotImplemented
 
+(* implementation of [x<->y]e *)
 let rec swap_variables x y e =
   match e with
   | Var v -> 
@@ -34,6 +34,7 @@ let rec swap_variables x y e =
   | App (e1, e2) -> 
       App (swap_variables x y e1, swap_variables x y e2)
 
+(* implementation of FV(e) *)
 let rec freeVariable e = match e with
   | Var x -> [x]
   | Lam (x , e) -> 
@@ -45,20 +46,42 @@ let rec freeVariable e = match e with
     let lst2 = freeVariable(e2) in
     lst1 @ lst2
 
-let rec substitute eprime x e = match e with
-  | Var a -> if (x=a) then eprime else Var a
+(* implementation of [e'/x]e *)
+let rec substitute e' x e = match e with
+  | Var a -> if (x=a) then e' else Var a
   | Lam (y , e1) -> 
       if(x = y) then Lam(y,e1)
-      else if (not (List.mem y (freeVariable eprime))) 
-        then Lam (y , (substitute eprime x e1))
-      else let z = (getFreshVariable y) in
-        Lam (z , (substitute eprime x (swap_variables z y e1)))
+      (* When y is not free variable of e' *)
+      else if (not (List.mem y (freeVariable e'))) 
+        then Lam (y , (substitute e' x e1))
+      
+      (* When y is free variable of e' *)
+      else 
+        let z = (getFreshVariable y) in
+        Lam (z , (substitute e' x (swap_variables z y e1)))
+
   | App (e1, e2) ->
-    let sube1 = substitute eprime x e1 in
-    let sube2 = substitute eprime x e2 in
+    let sube1 = substitute e' x e1 in
+    let sube2 = substitute e' x e2 in
     App (sube1, sube2)
 
-
+(* implementation of a reduction *)
+let rec stepv e = match e with
+| Var _ | Lam (_,_) -> raise Stuck 
+| App (e1, e2) -> 
+  try 
+    (* e1|->e1' then e1 e2 |-> e1' e2*)
+    let e1' = stepv e1 in
+    App (e1', e2) 
+  with Stuck -> 
+    try
+      (* e2 |-> e2' then lam x.e e2 |-> lam x.e e2' *)
+      let e2' = stepv e2 in
+      App (e1, e2')
+    with Stuck -> match e1 with
+    
+      (* axiom (lam x.e) v |-> [v/x] e *)
+      | Lam(x,e') -> substitute e2 x e'
 
 let stepOpt stepf e = try Some (stepf e) with Stuck -> None
 

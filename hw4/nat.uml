@@ -7,3 +7,53 @@ let eight = add four four in
 eight
 ;
 
+let tt = lam t. lam f. t in
+let ff = lam t. lam f. f in
+tt x y
+
+let tt = lam t. lam f. t in
+let ff = lam t. lam f. f in
+ff x y
+
+let tt = lam t. lam f. t in
+let ff = lam t. lam f. f in
+let and = lam x. lam y. x y ff in
+let or = lam x. lam y. x tt y in
+let not = lam x. x ff tt in
+and tt ff;
+
+let tt = lam t. lam f. t in
+let ff = lam t. lam f. f in
+let and = lam x. lam y. x y ff in
+let or = lam x. lam y. x tt y in
+let not = lam x. x ff tt in
+and tt tt;
+
+let tt = lam t. lam f. t in
+let ff = lam t. lam f. f in
+let and = lam x. lam y. x y ff in
+let or = lam x. lam y. x tt y in
+let not = lam x. x ff tt in
+or tt ff;
+
+let tt = lam t. lam f. t in
+let ff = lam t. lam f. f in
+let and = lam x. lam y. x y ff in
+let or = lam x. lam y. x tt y in
+let not = lam x. x ff tt in
+or ff ff;
+
+let tt = lam t. lam f. t in
+let ff = lam t. lam f. f in
+let and = lam x. lam y. x y ff in
+let or = lam x. lam y. x tt y in
+let not = lam x. x ff tt in
+not tt;
+
+
+let tt = lam t. lam f. t in
+let ff = lam t. lam f. f in
+let pair = lam x. lam y. lam b. b x y in
+let fst = lam p. p tt in 
+let snd = lam p. p ff in
+fst (pair x y);
