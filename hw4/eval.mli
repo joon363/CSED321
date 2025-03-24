@@ -5,6 +5,12 @@ exception Stuck
    raises Stuck if impossible *)
 val stepv : Uml.exp -> Uml.exp
 
+val freeVariable : Uml.exp -> Uml.var list
+
+val swap_variables: Uml.var -> Uml.var -> Uml.exp -> Uml.exp
+
+val substitute : Uml.exp -> Uml.var -> Uml.exp -> Uml.exp
+
 (* ... returns NONE if impossible *)
 val stepOpt : (Uml.exp -> Uml.exp) -> Uml.exp -> Uml.exp option
 
