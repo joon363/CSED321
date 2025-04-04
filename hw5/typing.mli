@@ -1,5 +1,5 @@
 exception TypeError
-type context
+type context = Tml.var -> Tml.tp
 val createEmptyContext : unit -> context
 val typing : context -> Tml.exp -> Tml.tp
 val typeOf : Tml.exp -> Tml.tp

@@ -15,6 +15,7 @@ OBJ = tml.cmo parser.cmo lexer.cmo typing.cmo inout.cmo eval.cmo loop.cmo
 all: $(OBJ) hw5.cmo
 	$(CAMLC) -o lib.cma -a $(OBJ)
 	$(CAMLC) -o $(TARGET) lib.cma hw5.cmo 
+	./$(TARGET)
 
 clean:
 	rm -f $(TARGET) $(PARSER) $(LIB) *.annot *.aux *.log *.cm[iox] *.dvi *~ .*~ #*# 
