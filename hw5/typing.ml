@@ -16,10 +16,6 @@ type context = Tml.var -> Tml.tp
 let createEmptyContext () = fun x -> raise TypeError
 
 (* val typing : context -> Tml.exp -> Tml.tp *)
-(* takes a typing context Γ of type Typing.context and an 
-expression e of type Tml.exp, and returns a type A such that Γ ⊢ e:A; 
-It raises an exception TypeError if e does not type check, 
-i.e., there is no A such that Γ ⊢ e : A. *)
 let rec typing cxt e = 
   (* Γ, x:A *)
   let extendedCxt x t= fun var -> if var=x then t else cxt x in
@@ -89,7 +85,9 @@ let rec typing cxt e =
           if (etType==efType) then efType
           else raise TypeError
       | _ -> raise TypeError)
+
   | Num (n) -> Int
+  
   | Plus -> 
       Fun(Prod(Int, Int), Int)
   | Minus -> 
