@@ -1,6 +1,7 @@
 **/*.cmi
 **/*.cmo
 **/*.cma
+**/*.exe
 **/lexer.ml
 **/parser.ml
 **/parser.mli
