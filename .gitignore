@@ -1,5 +1,10 @@
 **/*.cmi
 **/*.cmo
+**/*.cma
+**/lexer.ml
+**/parser.ml
+**/parser.mli
+
 hw1/hw1
 hw2/hw2
 hw3/hw3
@@ -16,6 +21,6 @@ hw3/hw3_test
 hw4/hw4_test
 hw5/hw5_test
 hw6/hw6_test
-hw7/hw7_test
+hw7/test.tml.exe
 hw8/hw8_test
 hw9/hw9_test
