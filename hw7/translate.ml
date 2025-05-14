@@ -72,11 +72,11 @@ let rec loc2str l = match l with
 let fail_label = labelNewStr ""
 
 let find_free_vars expty =
-  let rec find_bound_vars_in_patty patty bound_vars = (
+  let rec find_BV_patty patty bound_vars = (
     match patty with
       PATTY (P_VID (avid, VAR), _) -> avid :: bound_vars
-    | PATTY (P_VIDP ((_, CONF), patty'), _) -> find_bound_vars_in_patty patty' bound_vars
-    | PATTY (P_PAIR (patty1, patty2), _) -> find_bound_vars_in_patty patty1 (find_bound_vars_in_patty patty2 bound_vars)
+    | PATTY (P_VIDP ((_, CONF), patty'), _) -> find_BV_patty patty' bound_vars
+    | PATTY (P_PAIR (patty1, patty2), _) -> find_BV_patty patty1 (find_BV_patty patty2 bound_vars)
     | _ -> bound_vars
   ) in
   let rec find_FV expty bound_vars free_vars = (
@@ -88,40 +88,37 @@ let find_free_vars expty =
           then free_vars 
           else avid :: free_vars
         )
+
       | EXPTY (E_FUN mlist, _) -> (
           List.fold_left (
             fun acc (M_RULE (patty, expty)) ->
-              let bound_vars' = find_bound_vars_in_patty patty bound_vars in
+              let bound_vars' = find_BV_patty patty bound_vars in
               find_FV expty bound_vars' acc
           ) free_vars mlist
         )
-      | EXPTY (E_APP (expty1, expty2), _) -> 
+
+      | EXPTY (E_APP (expty1, expty2), _) 
+      | EXPTY (E_PAIR (expty1, expty2), _)-> 
         let fv_expty1 = (find_FV expty1 bound_vars free_vars) in
         find_FV expty2 bound_vars fv_expty1
-      | EXPTY (E_PAIR (expty1, expty2), _) -> 
-        let fv_expty1 = (find_FV expty1 bound_vars free_vars) in
-        find_FV expty2 bound_vars fv_expty1
+
       | EXPTY (E_LET (D_VAL (patty, expty1), expty2), _) -> (
-          let bound_vars' = find_bound_vars_in_patty patty bound_vars in
-          let free_vars' = find_FV expty1 bound_vars' free_vars
-          in
-            find_FV expty2 bound_vars' free_vars'
+          let bound_vars' = find_BV_patty patty bound_vars in
+          let free_vars' = find_FV expty1 bound_vars' free_vars in
+          find_FV expty2 bound_vars' free_vars'
         )
       | EXPTY (E_LET (D_REC (patty, expty1), expty2), _) -> (
-          let bound_vars' = find_bound_vars_in_patty patty bound_vars in
-          let free_vars' = find_FV expty1 bound_vars' free_vars
-          in
-            find_FV expty2 bound_vars' free_vars'
+          let bound_vars' = find_BV_patty patty bound_vars in
+          let free_vars' = find_FV expty1 bound_vars' free_vars in
+          find_FV expty2 bound_vars' free_vars'
         )
       | _ -> free_vars
-  )
-  in
-    find_FV expty [] []
+  ) in
+  find_FV expty [] []
 
 let find_constructors (dlist, et) =
   let rec find_constructors_in_expty constructors (EXPTY (exp, _)) = (
-    let (cons, confs) = constructors
-    in
+    let (cons, confs) = constructors in
       match exp with
         E_VID (avid, CON) -> (
           if (List.exists (fun elem -> elem = avid) cons)
@@ -134,36 +131,45 @@ let find_constructors (dlist, et) =
           else (cons, avid :: confs)
         )
       | E_FUN mlist -> (
-          List.fold_left (fun constructors_acc (M_RULE (_, expty)) -> find_constructors_in_expty constructors_acc expty) constructors mlist
+          List.fold_left (
+            fun constructors_acc (M_RULE (_, expty)) -> 
+              find_constructors_in_expty constructors_acc expty
+          ) constructors mlist
         )
-      | E_APP (expty1, expty2) -> find_constructors_in_expty (find_constructors_in_expty constructors expty1) expty2
-      | E_PAIR (expty1, expty2) -> find_constructors_in_expty (find_constructors_in_expty constructors expty1) expty2
-      | E_LET (dec, expty) -> find_constructors_in_expty (find_constructors_in_dec constructors dec) expty
+      | E_APP (expty1, expty2) 
+      | E_PAIR (expty1, expty2) -> 
+        let c_expty1 = (find_constructors_in_expty constructors expty1) in
+        find_constructors_in_expty c_expty1 expty2
+      | E_LET (dec, expty) -> 
+        let c_dec = (find_constructors_in_dec constructors dec) in
+        find_constructors_in_expty c_dec expty
       | _ -> constructors
   )
   and find_constructors_in_dec constructors dec = (
     match dec with
-      D_VAL (_, expty) -> find_constructors_in_expty constructors expty
-    | D_REC (_, expty) -> find_constructors_in_expty constructors expty
+      D_VAL (_, expty) | D_REC (_, expty) -> 
+      find_constructors_in_expty constructors expty
     | _ -> constructors
-  )
-  in
-    List.fold_left (fun constructors_acc dec -> find_constructors_in_dec constructors_acc dec) (find_constructors_in_expty ([], []) et) dlist
+  ) in
+  List.fold_left (
+    fun constructors_acc dec -> 
+      find_constructors_in_dec constructors_acc dec
+  ) (find_constructors_in_expty ([], []) et) dlist
 
-(*  -> code * env *)
+
 let create_datatype_closures (dlist, et) =
   let create_con_closure (code, (venv, count)) con = (
     let code' = clist [
       MALLOC (LREG cx, INT 1);
       MOVE (LREFREG (cx, 0), STR con);
       PUSH (REG cx);
-    ]
-    in
-      (code @@ code', (Dict.insert (con, L_DREF (L_REG bx, count)) venv, count + 1))
+    ] in
+    let venv' = Dict.insert (con, L_DREF (L_REG bx, count)) venv in
+    (code @@ code', (venv', count + 1))
   ) in
   let create_conf_closure (code, (venv, count)) conf = (
-    let label_start = labelNewStr ("_DT_" ^ conf ^ "_START") in
-    let label_end = labelNewStr ("_DT_" ^ conf ^ "_END") in
+    let label_start = labelNewStr (conf ^ "_START") in
+    let label_end = labelNewStr (conf ^ "_END") in
     let code' = clist [
       DEBUG conf;
       JUMP (ADDR (CADDR label_end));
@@ -177,20 +183,20 @@ let create_datatype_closures (dlist, et) =
       MALLOC (LREG cx, INT 1);
       MOVE (LREFREG (cx, 0), ADDR (CADDR label_start));
       PUSH (REG cx);
-    ]
-    in
-      (code @@ code', (Dict.insert (conf, L_DREF (L_REG bx, count)) venv, count + 1))
+    ] in
+    let venv' = Dict.insert (conf, L_DREF (L_REG bx, count)) venv in
+    (code @@ code', (venv', count + 1))
   ) in
   let (cons, confs) = find_constructors (dlist, et) in
-  let (code1, env1) = List.fold_left create_con_closure (code0, (venv0, 0)) cons
-  in
-    List.fold_left create_conf_closure (code1, env1) confs
+  let (code1, env1) = List.fold_left create_con_closure (code0, (venv0, 0)) cons in
+  List.fold_left create_conf_closure (code1, env1) confs
 
 let count_closures (dlist, et) =
   let rec count_global_closures count dec = (
     match dec with
       D_VAL (PATTY (P_PAIR (patty1, patty2), _), EXPTY (E_PAIR (expty1, expty2), _)) ->
-        count_global_closures (count_global_closures count (D_VAL (patty1, expty1))) (D_VAL (patty2, expty2))
+        let count_1 = (count_global_closures count (D_VAL (patty1, expty1))) in
+        count_global_closures count_1 (D_VAL (patty2, expty2))
     | D_VAL (_, EXPTY (E_FUN _, _)) -> count + 1
     | D_VAL (_, EXPTY (E_APP (EXPTY (E_VID (avid, CONF), _), _), _)) -> count + 1
     | D_VAL (_, EXPTY (E_PAIR _, _)) -> count + 1
@@ -200,28 +206,20 @@ let count_closures (dlist, et) =
   let rec count_local_closures_in_expty count (EXPTY (exp, _)) = (
     match exp with
     | E_FUN mlist -> (
-        List.fold_left (fun count_acc (M_RULE (_, expty)) ->
-          let count_mrule = count_local_closures_in_expty count expty
-          in
-            if count_mrule > count_acc then count_mrule else count_acc
-          ) count mlist
+        List.fold_left (
+          fun count_acc (M_RULE (_, expty)) ->
+            let count_mrule = count_local_closures_in_expty count expty in
+              if count_mrule > count_acc then count_mrule else count_acc
+        ) count mlist
       )
-    | E_APP (expty1, expty2) -> (
+    | E_APP (expty1, expty2) | E_PAIR (expty1, expty2) -> (
         let count1 = count_local_closures_in_expty count expty1 in
-        let count2 = count_local_closures_in_expty count expty2
-        in
-          if count1 > count2 then count1 else count2
-      )
-    | E_PAIR (expty1, expty2) -> (
-        let count1 = count_local_closures_in_expty count expty1 in
-        let count2 = count_local_closures_in_expty count expty2
-        in
-          if count1 > count2 then count1 else count2
+        let count2 = count_local_closures_in_expty count expty2 in
+        if count1 > count2 then count1 else count2
       )
     | E_LET (dec, expty) -> (
-        let count1 = count_global_closures count dec
-        in
-          count_local_closures_in_expty count1 expty
+        let count1 = count_global_closures count dec in
+        count_local_closures_in_expty count1 expty
       )
     | _ -> count
   ) in
@@ -229,26 +227,24 @@ let count_closures (dlist, et) =
     match dec with
       D_VAL (PATTY (P_PAIR (patty1, patty2), _), EXPTY (E_PAIR (expty1, expty2), _)) -> (
         let count1 = count_local_closures_in_expty count expty1 in
-        let count2 = count_local_closures_in_expty count expty2
-        in
-          count1 + count2
+        let count2 = count_local_closures_in_expty count expty2 in
+        count1 + count2
       )
     | D_VAL (_, expty) -> count_local_closures_in_expty count expty
     | D_REC (_, expty) -> count_local_closures_in_expty count expty
     | _ -> count
   ) in
-  (* let (cons, confs) = find_constructors (dlist, et) in *)
   let count_global = List.fold_left count_global_closures 0 dlist in
-  let count_local = List.fold_left (fun count_acc dec -> 
-      let count_dec = count_local_closures_in_dec 0 dec
-      in
+  let count_local = List.fold_left (
+      fun count_acc dec -> 
+        let count_dec = count_local_closures_in_dec 0 dec in
         if count_dec > count_acc then count_dec else count_acc
-    ) (count_local_closures_in_expty 0 et) dlist
-  in
+    ) (count_local_closures_in_expty 0 et) dlist in
     count_global + count_local
 
 let rec create_closure_space code n =
-  if n = 0 then code
+  if n = 0 
+  then code
   else create_closure_space (cpost code [PUSH (INT 0)]) (n - 1)
 
 (* pat2code : Mach.label -> Mach.label - > loc -> Mono.pat -> Mach.code * env *)
@@ -517,6 +513,4 @@ let program2code (dlist, et) =
         (code_acc @@ code_dec, environ_dec)
   ) (code0, environ1) dlist in
   let (code4, rvalue) = expty2code environ3 (labelNewStr "PREXP_") et
-  in 
-  let (venv1, count1) = environ1 in
-    [LABEL start_label; MOVE (LREG bx, REG sp)] @@ code1 @@ code2 @@ code3 @@ code4 @@ [HALT rvalue; LABEL fail_label; EXCEPTION]
+  in [LABEL start_label; MOVE (LREG bx, REG sp)] @@ code1 @@ code2 @@ code3 @@ code4 @@ [HALT rvalue; LABEL fail_label; EXCEPTION]
